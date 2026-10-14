@@ -1,5 +1,7 @@
 # Medio Under — POC
 
+> Este repositorio es una referencia visual y de contenido histórico. La superficie pública canónica es `frontend/` (React/Vite); no debe desplegarse este HTML en paralelo con la aplicación activa.
+
 Prototipo navegable para un medio/comunidad de cultura under: historias, agenda, oportunidades freelance, descuentos para producir y experiencias de fans.
 
 ## Cómo verlo

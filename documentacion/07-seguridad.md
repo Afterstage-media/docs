@@ -19,7 +19,7 @@
 
 ## Configuración obligatoria
 
-En producción definir `NODE_ENV=production`, `JWT_SECRET`, `MONGODB_URI`, `PUBLIC_BASE_URL` y `CLOUDFLARE_TUNNEL_URL`. Usar `TRUST_PROXY=true` únicamente cuando el proceso reciba tráfico exclusivamente desde el Nginx/Ingress controlado. `ADMIN_TOKEN` y `AUTH_USERS_JSON` quedan sólo como compatibilidad/bootstrap; con `JWT_SECRET` activo no se aceptan Bearer opacos ni `X-API-Key` salvo que se habiliten explícitamente `AUTH_ALLOW_LEGACY_BEARER=true` o `AUTH_ALLOW_LEGACY_API_KEY=true`.
+En producción definir `NODE_ENV=production`, `JWT_SECRET`, `MONGODB_URI`, `PUBLIC_BASE_URL` y `CLOUDFLARE_TUNNEL_URL`. Usar `TRUST_PROXY=true` únicamente cuando el proceso reciba tráfico exclusivamente desde el Nginx/Ingress controlado. La autenticación usa exclusivamente JWT emitidos por `/api/auth/login`; no se aceptan tokens opacos ni `X-API-Key`.
 
 La colección `users` contiene documentos `{ _id, role, active }`. Se puede provisionar o revocar un usuario con `npm run users:upsert -- <id> <admin|editor|press> [true|false]`; el JWT debe llevar ese `id` en `sub` y una expiración (`exp`).
 

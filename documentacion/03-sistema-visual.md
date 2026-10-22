@@ -4,6 +4,14 @@
 
 **Cartelera de barrio + revista independiente.** La interfaz mezcla la tensión de una pared de afiches con la claridad de una publicación editorial: bloques de tinta, etiquetas tipo sello, subrayados y una retícula que se permite romper.
 
+## Identidad de marca
+
+La identidad visual es la referencia obligatoria para decisiones de interfaz, piezas editoriales y materiales de comunicación. Las reglas de uso de esa identidad se traducen a comportamiento de producto en [05 · Reglas UX](./05-reglas-ux.md).
+
+- **Kit editable en Canva:** [VERIFICAR: pegar aquí la URL del archivo de identidad en Canva](CANVA_URL_PENDIENTE)
+- **Uso:** mantener la paleta, la tensión editorial y el tono cercano sin convertir la interfaz en una colección de adornos.
+- **Responsable de cambios:** cualquier modificación de color, tipografía, marca o recurso gráfico debe actualizar este documento y revisarse contra las reglas UX.
+
 ## Paleta
 
 - **Marfil** `#F4F0E8`: superficie principal, cálida y legible.
@@ -33,3 +41,6 @@
 - La información no depende solo del color.
 - Layout de una columna en móvil, con targets táctiles amplios.
 
+## Referencias relacionadas
+
+- [05 · Reglas UX](./05-reglas-ux.md)

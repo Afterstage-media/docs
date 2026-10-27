@@ -19,7 +19,7 @@ cargando eventos manualmente desde `/admin/prensa`.
 
 ## Configuración
 
-En `social-manager/.env`:
+En `backend/.env`:
 
 ```dotenv
 EVENTS_RSS_URLS=https://ejemplo.org/agenda.xml,https://otra-sala.org/feed

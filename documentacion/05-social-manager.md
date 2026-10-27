@@ -1,10 +1,10 @@
-# Gestor editorial y de redes de Medio Under
+# Backend editorial y de plataforma de Afterstage
 
 Backend Node.js desacoplado para gestionar el ciclo completo de una pieza editorial: idea, nota, material visual, copys, aprobación, programación y publicación. La interfaz React/Vite vive en `../frontend` y consume esta API.
 
 ## Norte del producto
 
-Medio Under busca convertirse en un medio reconocido para acceder a pases de prensa en eventos y recitales. El gestor debe ayudar a demostrar trabajo periodístico real: archivo de coberturas, notas consistentes, fotos correctamente acreditadas, métricas y seguimiento de contactos. La automatización de redes es el último tramo de ese proceso, no un sustituto de la edición ni de la relación con productoras y salas.
+Afterstage busca ser un medio y una infraestructura confiable para la escena. El gestor debe demostrar trabajo periodístico real: archivo de coberturas, notas consistentes, fotos correctamente acreditadas, métricas y seguimiento de contactos. La automatización de redes es el último tramo de ese proceso, no un sustituto de la edición ni de la relación con artistas, productoras y salas.
 
 El dominio de prensa ya incorpora:
 
@@ -22,8 +22,8 @@ El dominio de prensa ya incorpora:
 - **IA:** endpoint compatible con OpenAI para nota completa, copys o edición.
 - **Meta:** Instagram Content Publishing API y Facebook Pages API.
 - **MCP:** servidor stdio local con herramientas editoriales; su límite de seguridad es el acceso al proceso y a sus variables.
-- **Operación:** logs JSON, health/readiness, estado del scheduler, rate limit, auditoría `data/audit.jsonl` y script de backup.
-- **Operación:** imagen Docker multi-stage, usuario sin privilegios y healthcheck.
+- **Operación:** logs JSON, health/readiness, estado del scheduler, rate limit, auditoría y script de backup.
+- **Despliegue:** imagen Docker multi-stage, usuario sin privilegios, healthcheck y GitOps en `ci-cd/` sobre `underkode`.
 
 La estructura de `src` sigue una arquitectura por capas:
 
@@ -49,7 +49,7 @@ No se automatiza Chrome. La API oficial de Meta evita selectores rotos, sesiones
 ## Inicio rápido
 
 ```bash
-cp social-manager/.env.example social-manager/.env
+cp .env.example .env
 # Generar un token seguro, por ejemplo: openssl rand -hex 32
 docker compose up --build
 ```
@@ -59,7 +59,7 @@ La interfaz queda disponible en `http://localhost:8080` y la redacción en `http
 Para desarrollo sin Docker:
 
 ```bash
-cd social-manager
+cd backend
 npm install
 npm run dev
 ```
@@ -71,9 +71,11 @@ npm run dev
 | `MONGODB_URI` | URI obligatoria de MongoDB Atlas. |
 | `MONGODB_DB` | Base de datos, por defecto `medio_under`. |
 | `PUBLIC_BASE_URL` | Origen HTTPS público desde el que Meta descargará imágenes. |
-| `MEDIA_ROOT` | Raíz local autorizada para archivos que se sirven bajo `/media`. |
-| `PUBLIC_MEDIA_BASE_URL` | Base pública alternativa para medios locales. |
-| `CLOUDFLARE_TUNNEL_URL` | URL HTTPS vigente del túnel Cloudflare que apunta al puerto del gestor. |
+| `MEDIA_GATEWAY_URL` | URL del gateway que reserva y autoriza subidas a R2. |
+| `MEDIA_PUBLIC_BASE_URL` | Base pública del CDN o bucket R2. |
+| `MEDIA_GATEWAY_SERVICE_TOKEN` | Credencial servidor-a-servidor del gateway; nunca va al frontend. |
+| `MEDIA_ROOT` | Almacenamiento local legado para desarrollo o fallback explícito. |
+| `CLOUDFLARE_TUNNEL_URL` | URL HTTPS del túnel para el sitio; no reemplaza el gateway de medios. |
 | `AI_API_KEY` | Habilita las acciones de generación. |
 | `AI_BASE_URL` | Base OpenAI-compatible; por defecto `https://api.openai.com/v1`. |
 | `AI_MODEL` | Modelo de redacción. |
@@ -82,7 +84,7 @@ npm run dev
 | `META_PAGE_ID` | ID de la página de Facebook. |
 | `META_API_VERSION` | Versión de Graph API, configurable para facilitar upgrades. |
 | `CORS_ORIGINS` | Lista opcional de orígenes permitidos, separada por comas. |
-| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | Opcionales. Habilitan el envío de solicitudes de acreditación. |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | Habilitan respuestas y notificaciones desde la bandeja de `@afterstage.ar`. |
 | `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` | Ajustes del transporte de correo. |
 | `JWT_SECRET` | Clave obligatoria para firmar y validar los JWT del login. |
 | `JWT_ACCESS_TTL_SECONDS` | Duración del access token emitido por `/api/auth/login` (mínimo 5 minutos; por defecto 15). |
@@ -98,11 +100,11 @@ Para Atlas, agregá la IP del servidor en Network Access, creá un usuario de ba
 El login se administra en MongoDB. Para crear o rotar un usuario ejecutá `USER_PASSWORD='una-clave-de-12-o-más-caracteres' MONGODB_URI='...' npm run users:upsert -- redaccion editor redaccion@medio.example true`. El backend nunca guarda la contraseña en claro: usa hashes `scrypt`, emite JWT HS256 de corta duración y vuelve a consultar en Mongo el usuario activo y su rol en cada request.
 
 
-El flujo de archivos locales y Cloudflare está detallado en [`documentacion/06-publicacion-local-cloudflare.md`](../documentacion/06-publicacion-local-cloudflare.md). La URL estable se configura con `CLOUDFLARE_TUNNEL_URL`; no se crea un container de Meta hasta que llega la fecha programada.
+El flujo productivo de fotos y videos está detallado en [`documentacion/06-publicacion-local-cloudflare.md`](../documentacion/06-publicacion-local-cloudflare.md): R2/gateway es el camino esperado; el almacenamiento local es solo desarrollo o compatibilidad.
 
 ## Sitio público conectado
 
-El `docker-compose.yml` incluye un proxy Nginx en el puerto `8080`. Sirve el sitio editorial estático y enruta `/api`, `/media`, `/notas/:slug`, `/press-kit`, `/rss.xml`, `/sitemap.xml` y `/robots.txt` al gestor. Así el feed público y las notas publicadas funcionan en el mismo dominio; directorio, comunidad y publicación exigen autenticación. El túnel Cloudflare debe apuntar al servicio web (`http://localhost:8080`) y `PUBLIC_BASE_URL` debe usar ese dominio HTTPS.
+El `docker-compose.yml` incluye un proxy Nginx en el puerto `8080`. Sirve la SPA y enruta `/api`, `/media`, `/notas/:slug`, `/press-kit`, `/rss.xml`, `/sitemap.xml` y `/robots.txt` al backend. Las rutas públicas permiten explorar; las acciones de creación, moderación y operación exigen autenticación y permisos. El túnel Cloudflare debe apuntar al servicio web (`http://localhost:8080`) y `PUBLIC_BASE_URL` debe usar ese dominio HTTPS.
 
 Las propuestas autenticadas de `/publicar` entran como contenidos `idea` y quedan pendientes de moderación. El equipo puede completar autor, fotógrafo, fuente, SEO, créditos y destacar una nota desde `/admin`.
 
@@ -123,7 +125,7 @@ Los correos se envían con el nombre configurado en el dossier (`mediaKit.name`)
 
 ## Seguridad y operación
 
-Las rutas privadas aceptan únicamente `Authorization: Bearer <JWT>`. Cada usuario tiene un array obligatorio de roles y otro de permisos; no existe un rol singular. `admin` controla todo; `editor` gestiona contenido; `press` gestiona acreditaciones, eventos y dossier; `directory` gestiona el catálogo; `community` puede enviar propuestas autenticadas; `auditor` sólo puede consultar contenido, prensa, directorio y postulaciones; `social` habilita la operación de Instagram. Los permisos granulares son `instagram:read`, `instagram:metrics` e `instagram:publish`; las métricas y la publicación de Instagram no se habilitan para un editor común. Sincronizar roles y permisos en el JWT no alcanza: cada request se revalida contra MongoDB. Al inicio las propuestas de comunidad se aprueban automáticamente (`AUTO_APPROVE_COMMUNITY_SUBMISSIONS=true` implícito); para exigir revisión manual configurar esa variable en `false`. Cada request queda registrado en `DATA_DIR/audit.jsonl` y el endpoint `/api/ops/status` muestra scheduler, persistencia y túnel para monitoreo.
+Las rutas privadas usan Bearer JWT y sesión HttpOnly según el flujo de navegador. Cada usuario tiene arrays de roles y permisos; no existe un rol singular. `admin` controla todo; `editor` gestiona contenido; `press` gestiona prensa, eventos y dossier; `directory` gestiona el catálogo; `community` puede enviar propuestas; `auditor` consulta superficies autorizadas; `social` habilita Instagram. Los permisos granulares son `instagram:read`, `instagram:metrics` e `instagram:publish`. Cada request se revalida contra MongoDB y queda auditado.
 
 Para un backup local/Docker: `DATA_DIR=./data UPLOAD_DIR=./uploads ./scripts/backup.sh`. En Atlas, complementar con `mongodump` programado y retención en almacenamiento externo.
 
@@ -137,9 +139,9 @@ Primero compilá el servicio con `npm run build`. Configuración de ejemplo para
     "medio-under": {
       "command": "node",
       "args": ["dist/mcp-stdio.js"],
-      "cwd": "/ruta/al/repo/medio-under/social-manager",
+      "cwd": "/ruta/al/repo/afterstage/backend",
       "env": {
-        "DATA_DIR": "/ruta/al/repo/medio-under/social-manager/data",
+        "DATA_DIR": "/ruta/al/repo/afterstage/backend/data",
         "MONGODB_URI": "mongodb+srv://<usuario>:<password>@<cluster>/medio_under",
         "MONGODB_DB": "medio_under",
         "AI_API_KEY": "configurar-en-el-gestor-de-secretos-del-cliente"
@@ -206,7 +208,7 @@ Las rutas `/api/*` requieren un JWT emitido por el login; los roles y permisos s
 ## Verificación
 
 ```bash
-cd social-manager
+cd backend
 npm test
 npm run build
 ```

@@ -1,40 +1,64 @@
 # 01 · Visión del producto
 
-## Nombre de trabajo
+## Definición
 
-**Medio Under**. El nombre es directo, fácil de recordar y deja espacio para que la comunidad lo haga propio.
+Afterstage es una plataforma cultural independiente para la escena musical y cultural argentina. Reúne tres funciones que hoy suelen vivir separadas:
 
-## Idea central
+1. **Medio editorial:** notas, crónicas, entrevistas, columnas, coberturas y créditos.
+2. **Red profesional:** perfiles de fotógrafos, noteros, cronistas, videógrafos, diseñadores, artistas, venues y productoras.
+3. **Infraestructura de eventos:** agenda nacional, búsquedas de cobertura, seguros, traslados, servicios, marketplace y conversaciones vinculadas a una fecha.
 
-Una plataforma cultural independiente que mezcla medio editorial, comunidad profesional y agenda de shows. Sirve para descubrir escenas que no siempre llegan a los medios tradicionales y, al mismo tiempo, para que quienes las documentan puedan ofrecer su trabajo.
+No es solamente un blog, un directorio ni una cartelera. El valor aparece cuando una persona puede descubrir una escena, entender quién la produce y resolver algo concreto para participar o trabajar en ella.
 
-## Problema
+## Promesa
 
-Fotógrafos, noteros, cronistas, bandas y productoras suelen estar dispersos entre redes sociales, grupos de mensajería y contactos informales. Eso dificulta mostrar el trabajo, conseguir colaboraciones y enterarse de oportunidades reales.
+> **Lo que pasa abajo, contado y conectado por quienes están ahí.**
 
-## Propuesta de valor
+Afterstage hace visible la escena independiente, reconoce el trabajo que la documenta y reduce la fricción entre lectores, artistas, espacios, productores y colaboradores.
 
-> **Lo que pasa abajo, contado por quienes están ahí.**
+## Audiencias y trabajos
 
-Medio Under conecta tres necesidades en un mismo lugar:
+| Persona | Necesidad principal | Resultado esperado |
+| --- | --- | --- |
+| Lectora o fan | Descubrir qué pasa y por qué importa | Leer, guardar y asistir a un evento |
+| Artista o banda | Ser encontrado y contextualizado | Perfil, agenda, cobertura y contacto |
+| Venue o espacio | Dar visibilidad a su programación | Fecha publicada, ubicación y audiencia |
+| Fotógrafa/o, notera/o o cronista | Mostrar trabajo y conseguir oportunidades | Perfil, portfolio, créditos y postulaciones |
+| Productora | Resolver cobertura, personal, seguros o traslados | Solicitud clara, propuestas y seguimiento |
+| Redacción y operación | Publicar con criterio y trazabilidad | Borradores, revisión, créditos, correo y métricas |
 
-1. **Ver y leer** historias, columnas y coberturas de la escena.
-2. **Encontrar y ofrecer** servicios creativos, colaboraciones y búsquedas.
-3. **Participar** en shows, experiencias y beneficios accesibles.
+## Tres circuitos conectados
 
-## Audiencias
+### Descubrir y leer
 
-- **Creadores:** fotógrafos, cronistas, videógrafos y diseñadores que buscan visibilidad y trabajo.
-- **Protagonistas:** bandas, artistas y espacios que necesitan difusión o cobertura.
-- **Productoras:** publican búsquedas patrocinadas para conseguir talento.
-- **Fans:** descubren agenda y pueden ofrecer contenido o experiencias a cambio de entradas.
-- **Lectores curiosos:** quieren una mirada cercana, honesta y barata/gratuita sobre la cultura local.
+La persona llega a una nota o a la agenda, entiende la escena, consulta un evento y puede seguir hacia perfiles, coberturas o servicios relacionados.
 
-## Principios editoriales
+### Crear y colaborar
 
-- Cercanía antes que solemnidad.
-- Escena local y voces nuevas.
-- Acceso gratuito o de bajo costo.
-- Transparencia cuando una publicación es patrocinada.
-- Créditos visibles para cada persona que produce una pieza.
+Una persona creadora arma un perfil con muestras reales, encuentra una búsqueda, postula su trabajo, participa de una cobertura y recibe créditos visibles.
 
+### Producir y resolver
+
+Una artista, venue o productora publica una necesidad y puede pedir cobertura, seguro, traslado o un servicio. Afterstage organiza el contacto y el estado; no promete una contratación automática.
+
+## Principios
+
+- **Escena antes que solemnidad:** la voz es cercana, situada y respetuosa.
+- **Contenido antes que decoración:** la identidad editorial ordena la experiencia; no tapa vacíos ni errores.
+- **Crédito como infraestructura:** toda pieza reconoce a quienes aportaron texto, imagen, video, producción o fuente.
+- **Intención antes que rol:** la persona expresa qué quiere hacer antes de elegir una categoría técnica.
+- **Acceso progresivo:** explorar contenido público no requiere registro; los datos sensibles se piden cuando son necesarios.
+- **Transparencia comercial:** una búsqueda patrocinada, servicio, beneficio o comisión debe identificarse como tal.
+- **No inventar:** si falta información editorial, legal, comercial o de marca, se marca como pendiente y se verifica antes de publicar.
+
+## Límites del producto
+
+Afterstage no reemplaza a una redacción responsable, una aseguradora, una productora ni una plataforma de pagos. Ordena información, conecta personas y registra estados; cada promesa de cobertura, seguro, traslado, contratación o beneficio debe explicitar quién responde y cuál es el siguiente paso.
+
+## Fuente de verdad
+
+- Producto y experiencia: esta documentación y [`05 · Reglas UX`](./05-reglas-ux.md).
+- Implementación pública: `frontend/`.
+- API, persistencia e integraciones: `backend/`.
+- Despliegue y producción: `ci-cd/`, exclusivamente sobre el cluster `afterstage` de `underkode`.
+- Brechas comprobadas: [`10 · Estado actual y brechas`](./10-estado-actual-y-brechas.md).

@@ -1,17 +1,42 @@
-# CI de Orux Solutions
+# 09 · CI/CD y producción de Afterstage
 
-El repositorio actual no apunta a Aurea: ese ecosistema es histórico y no debe
-usarse para este medio.
+Este documento reemplaza referencias históricas a Orux o Aurea. Afterstage tiene su propio repositorio de CI/CD y su propia producción.
 
-La organización `Orux-Solutions` sólo expone públicamente su repositorio de
-perfil `.github` con las credenciales disponibles en este entorno. No hay un
-repositorio de CI/release visible para copiar sin inventar una ruta o una
-configuración. Cuando se comparta la URL exacta del repo privado de Orux y el
-token tenga acceso, se puede comparar y adoptar sus workflows literalmente.
+## Repositorios
 
-Mientras tanto, el proyecto tiene workflows locales equivalentes y auditables:
+- `frontend`: React/Vite y superficie pública.
+- `backend`: API, persistencia, integraciones, correo y dominio editorial.
+- `afterstage-storage-gateway`: reservas y subidas a R2.
+- `ci-cd`: imágenes, manifiestos, Flux y contratos de producción.
+- Este repositorio: documentación de producto, UX, seguridad y operación.
 
-- `.github/workflows/release.yml`: versión, tag anotado y GitHub Release.
-- `.github/workflows/commit-policy.yml`: validación de Conventional Commits.
-- `scripts/calculate-version.sh` y `scripts/validate-commits.sh`: lógica
-  reutilizable y testeable sin depender de otra organización.
+## Flujo obligatorio
+
+1. Trabajar en una rama que no sea `main`.
+2. Ejecutar formato, build, tests y auditoría de dependencias.
+3. Abrir PR y esperar CI verde.
+4. Mergear a `main`; nunca publicar directamente en `main`.
+5. Construir y escanear las imágenes desde `ci-cd`.
+6. Promover tags inmutables en `deploy/afterstage/kustomization.yaml` mediante PR.
+7. Esperar el reconcile/rollout de Flux en `underkode`.
+8. Verificar `https://afterstage.ar/health`, `/ready`, rutas públicas, logs y consola.
+
+El cluster local debe permanecer apagado. `underkode` es la única producción válida.
+
+## Contratos de publicación
+
+- No promover imágenes sin scan de vulnerabilidades exitoso.
+- No llamar “operativa” a una integración que solo tiene código: debe tener credenciales, proveedor, datos y prueba end-to-end.
+- No guardar secretos en Git, imágenes, frontend, capturas o logs.
+- No desplegar fixtures, datos demo ni contenido editorial inventado.
+- Si falta una credencial o decisión externa, registrar el bloqueo y detener esa parte del rollout.
+
+## Verificación productiva mínima
+
+```bash
+curl --fail --silent --show-error https://afterstage.ar/health
+curl --fail --silent --show-error https://afterstage.ar/ready
+curl --fail --silent --show-error https://afterstage.ar/sitemap.xml
+```
+
+En `underkode`, usar exclusivamente `KUBECONFIG="$HOME/.kube/afterstage.yaml"` y verificar que los deployments `backend` y `website` estén disponibles con el tag promovido. Consultar [`10 · Estado actual y brechas`](./10-estado-actual-y-brechas.md) para las capacidades que todavía dependen de configuración o contenido real.

@@ -2,9 +2,9 @@
 
 ## Controles aplicados
 
-- Autorización por roles (`admin`, `editor`, `press`, `directory`, `community`) en cada grupo de rutas privadas.
+- Autorización por roles (`admin`, `editor`, `press`, `directory`, `community`, `auditor`, `social`) en cada grupo de rutas privadas.
 - Los Bearer JWT se validan con HS256, expiración, issuer/audience y firma del backend; el `sub` se contrasta contra la colección `users` de MongoDB y el rol efectivo sale de la base, no del token.
-- Tokens comparados con comparación de tiempo constante; no se aceptan cookies de sesión.
+- Tokens comparados con comparación de tiempo constante; el navegador puede usar una sesión HttpOnly protegida según el flujo de autenticación.
 - Rate limit global y límite específico para propuestas públicas.
 - Headers defensivos: CSP, `X-Content-Type-Options`, `X-Frame-Options`, Referrer Policy y HSTS bajo HTTPS.
 - Auditoría JSONL con rotación de tamaño; no se registran query strings que puedan contener secretos.
@@ -21,7 +21,7 @@
 
 En producción definir `NODE_ENV=production`, `JWT_SECRET`, `MONGODB_URI`, `PUBLIC_BASE_URL` y `CLOUDFLARE_TUNNEL_URL`. Usar `TRUST_PROXY=true` únicamente cuando el proceso reciba tráfico exclusivamente desde el Nginx/Ingress controlado. La autenticación usa exclusivamente JWT emitidos por `/api/auth/login`; no se aceptan tokens opacos ni `X-API-Key`.
 
-La colección `users` contiene documentos `{ _id, role, active }`. Se puede provisionar o revocar un usuario con `npm run users:upsert -- <id> <admin|editor|press> [true|false]`; el JWT debe llevar ese `id` en `sub` y una expiración (`exp`).
+La colección `users` contiene documentos con identidad, `roles`, permisos y estado activo. Se puede provisionar o revocar un usuario con el script documentado en `backend`; el JWT debe llevar un `sub` válido y una expiración (`exp`), y los roles efectivos se revalidan contra MongoDB.
 
 No publicar `secret.example.yaml` con valores reales. Crear el Secret desde un gestor de secretos o aplicar un archivo fuera del repositorio. Rotar tokens si aparecen en logs, commits o capturas.
 

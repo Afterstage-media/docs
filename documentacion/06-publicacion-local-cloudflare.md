@@ -1,90 +1,62 @@
-# Publicación de medios locales con Cloudflare Tunnel
+# Medios, Cloudflare y almacenamiento R2
 
-El gestor puede publicar fotos, carruseles, videos y Reels cuyos archivos permanecen en la PC o servidor local. Meta no recibe normalmente el archivo directamente: recibe una URL HTTPS pública y descarga el recurso durante la creación del media container.
+## Decisión de arquitectura
+
+En producción, Afterstage no debe depender de la miniPC ni del filesystem local para servir fotos o videos públicos. El camino esperado es una subida directa al bucket R2 mediante el gateway de medios:
 
 ```text
-archivo local → /media del gestor → Cloudflare Tunnel → URL HTTPS → Meta → Instagram
+frontend → backend/gateway → URL firmada → Cloudflare R2 → CDN/URL pública → nota o cobertura
 ```
 
-## Configuración
+El almacenamiento local y el túnel para medios quedan limitados a desarrollo, diagnóstico o compatibilidad explícita. No confundir el túnel del sitio con el almacenamiento de assets.
 
-En `social-manager/.env`:
+## Contrato productivo
+
+Configurar en el backend:
+
+```env
+MEDIA_GATEWAY_URL=https://media-gateway.example.com
+MEDIA_PUBLIC_BASE_URL=https://media.afterstage.ar
+MEDIA_GATEWAY_SERVICE_TOKEN=secreto-del-gestor-de-secretos
+```
+
+El frontend se construye con `VITE_R2_MEDIA_UPLOADS=true` solo cuando el gateway, bucket, dominio y límites están probados. La variable no debe habilitarse como promesa si la infraestructura todavía no está operativa.
+
+El gateway debe:
+
+- autenticar la reserva servidor-a-servidor;
+- validar tamaño, MIME y cuota antes de emitir la URL;
+- usar claves aleatorias y expiración corta;
+- impedir path traversal, SSRF y destinos privados;
+- devolver únicamente metadatos y URLs públicas permitidas;
+- registrar auditoría sin guardar secretos ni archivos innecesarios.
+
+## Desarrollo local
+
+Para pruebas aisladas puede usarse `MEDIA_ROOT` y una URL de túnel. Ese flujo no es producción y no debe quedar como default del despliegue público:
 
 ```env
 MEDIA_ROOT=/app/media
-# Para un túnel nombrado estable:
-CLOUDFLARE_TUNNEL_URL=https://media.example.com
-# Alternativas: PUBLIC_MEDIA_BASE_URL o PUBLIC_BASE_URL
+PUBLIC_MEDIA_BASE_URL=https://media-dev.example.com
 ```
 
-El backend solo expone `MEDIA_ROOT` bajo `/media`, desactiva el listado de directorios y valida que cada ruta quede dentro de esa raíz. No se expone la computadora completa. Los nombres generados por la subida son aleatorios.
+Cloudflare Tunnel puede exponer el sitio web completo mediante el servicio `website:80`. No apuntar a una computadora personal como CDN permanente ni dejar una URL `trycloudflare.com` como configuración productiva.
 
-El `docker-compose.yml` incluye dos perfiles:
+## Validación antes de habilitar R2
 
-- `quick-tunnel`: URL temporal `trycloudflare.com`, útil para validar Meta.
-- `named-tunnel`: URL estable de producción usando un token de Cloudflare.
+1. Confirmar cuenta, plan, bucket, dominio y política de retención.
+2. Probar reserva, subida, lectura pública y expiración de URL.
+3. Probar MIME correcto/incorrecto, tamaño, cuota, reintento y cancelación.
+4. Confirmar que el token solo exista en Secret de producción.
+5. Subir una imagen de prueba no sensible y verificar crédito, URL y eliminación según política.
+6. Revisar logs y readiness sin exponer rutas internas.
 
-Prueba rápida con Docker:
+## Instagram y URLs públicas
 
-```bash
-docker compose --profile quick-tunnel up -d
-docker compose logs -f cloudflared-quick
-```
+Cuando Meta necesite descargar un recurso, la URL debe ser HTTPS, pública, sin cookies ni autenticación y devolver un `Content-Type` compatible. `localhost`, IPs privadas y Cloudflare Access no sirven para ese paso.
 
-Copiar la URL `https://…trycloudflare.com` que aparece en los logs y ponerla en `CLOUDFLARE_TUNNEL_URL` y `PUBLIC_BASE_URL` de `social-manager/.env`. Reiniciar `social-manager` después de guardar la URL.
+La publicación de Instagram queda separada de la subida: el backend puede simular el flujo sin llamar a Meta, y una publicación real requiere credenciales y permisos verificados.
 
-La alternativa manual, desde la máquina que puede alcanzar el servidor local, es:
+## Estado conocido
 
-```bash
-cloudflared tunnel --url http://localhost:8787
-```
-
-Copiar la URL `https://…trycloudflare.com` en `CLOUDFLARE_TUNNEL_URL` y reiniciar el gestor. Para una operación permanente conviene un túnel nombrado con subdominio propio y actualizar esa variable de manera estable. No usar Cloudflare Access en la ruta que Meta debe descargar.
-
-Para producción, crear el túnel en Cloudflare, asignar el hostname al servicio web y levantarlo así:
-
-```bash
-export CLOUDFLARE_TUNNEL_TOKEN='token-del-tunel'
-docker compose --profile named-tunnel up -d
-```
-
-El túnel apunta al servicio `website:80`, que publica el medio completo. No apuntar directamente a `social-manager:8787`: de ese modo se saltea el sitio público y el proxy de rutas. Configurar el hostname final también en `PUBLIC_BASE_URL` y `CLOUDFLARE_TUNNEL_URL`.
-
-## Scheduler y estados
-
-La aplicación guarda la programación en MongoDB y crea el container recién cuando llega `scheduledAt`. No crea containers con días de anticipación porque pueden vencer. El scheduler consulta cada 30 segundos y reclama el registro mediante una actualización atómica antes de publicar.
-
-Estados de la aplicación:
-
-```text
-scheduled → publishing → published
-                     ↘ scheduled (reintento)
-                     ↘ failed (sin reintentos restantes)
-```
-
-Cada intento guarda `attempts`, `nextAttemptAt`, `containerId`, `publishedMediaId` y `lastError`. Si Meta ya entregó un `containerId`, el siguiente intento consulta ese container antes de crear otro para reducir duplicados.
-
-Backoff inicial: 30 segundos, 2 minutos, 5 minutos y 15 minutos. Errores de token, permisos, formato, archivo inexistente o `Content-Type` incorrecto no se reintentan automáticamente.
-
-## Requisitos de la URL
-
-Antes de llamar a Meta, el backend comprueba `HEAD` sobre cada recurso. La respuesta debe ser pública, HTTPS, sin cookies ni autenticación, y devolver un tipo `image/*` o `video/*`. `localhost`, una IP privada y una URL protegida por Cloudflare Access no sirven para Meta.
-
-## Instagram
-
-- Una imagen usa `image_url`.
-- Varias imágenes se convierten en carrusel.
-- Un video usa `media_type=REELS` y `video_url`.
-- Una historia usa `media_type=STORIES`.
-- El backend espera `FINISHED` antes de llamar a `media_publish`.
-
-El túnel y el servidor HTTP deben permanecer activos desde la creación del container hasta que Meta termine de descargar y procesar el archivo. Después de publicar, el recurso puede dejar de exponerse si no se necesita para otra finalidad.
-
-## Seguridad
-
-- El token de Meta solo vive en el backend.
-- Se sirven únicamente archivos dentro de `MEDIA_ROOT`.
-- Se bloquean rutas fuera de la raíz y listados de directorios.
-- La API pública no permite crear containers.
-- La simulación no llama a Meta ni necesita túnel.
-- Para videos grandes, conservar el soporte HTTP de rangos del servidor/proxy y configurar límites acordes al tamaño real.
+La existencia del gateway no implica que R2 esté habilitado en producción. Consultar [`10 · Estado actual y brechas`](./10-estado-actual-y-brechas.md) antes de anunciar fotos remotas como capacidad disponible.

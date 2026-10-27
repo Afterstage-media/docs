@@ -8,9 +8,11 @@
 
 La identidad visual es la referencia obligatoria para decisiones de interfaz, piezas editoriales y materiales de comunicación. Las reglas de uso de esa identidad se traducen a comportamiento de producto en [05 · Reglas UX](./05-reglas-ux.md).
 
-- **Kit editable en Canva:** [VERIFICAR: pegar aquí la URL del archivo de identidad en Canva](CANVA_URL_PENDIENTE)
+- **Kit editable en Canva:** `[BLOQUEADO: falta la URL real del archivo de identidad en Canva]` (`CANVA_URL_PENDIENTE`). No reemplazar este valor con una URL inventada.
 - **Uso:** mantener la paleta, la tensión editorial y el tono cercano sin convertir la interfaz en una colección de adornos.
 - **Responsable de cambios:** cualquier modificación de color, tipografía, marca o recurso gráfico debe actualizar este documento y revisarse contra las reglas UX.
+
+Hasta recibir el kit real, esta paleta y estas reglas son una dirección provisional aprobada para producto, no una prueba de que el archivo maestro de marca exista o esté sincronizado.
 
 ## Paleta
 
@@ -44,3 +46,4 @@ La identidad visual es la referencia obligatoria para decisiones de interfaz, pi
 ## Referencias relacionadas
 
 - [05 · Reglas UX](./05-reglas-ux.md)
+- [10 · Estado actual y brechas](./10-estado-actual-y-brechas.md)
